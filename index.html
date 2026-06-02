@@ -1,599 +1,633 @@
-import flet as ft
-import math
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Comandante" />
+  <meta name="theme-color" content="#17301f" />
 
-# =========================
-# COLORES ESTILO CARTA ORIENTAL
-# =========================
-SKY = "#B9D7D2"
-SKY_DARK = "#6F918B"
+  <title>Contador de acciones del comandante</title>
 
-BG = "#D9C7A3"
-INK = "#11170F"
-
-CARD_GREEN = "#1F3B22"
-CARD_GREEN_2 = "#2F5A32"
-CARD_GREEN_3 = "#4F7B3B"
-
-GOLD = "#D8B05A"
-GOLD_DARK = "#7A5924"
-CREAM = "#F8EBC8"
-PAPER = "#EBD7A8"
-
-BLUE = "#2F8AB8"
-BLUE_DARK = "#16445A"
-
-RED = "#C95A36"
-RED_DARK = "#5A2418"
-
-BLACK_CARD = "#2A2923"
-SHADOW = "#000000"
-
-
-ACCIONES = [
-    {
-        "nombre": "Agregar maná",
-        "costo": 2,
-        "icono": "木",
-        "color": CARD_GREEN_3,
-        "btn": CARD_GREEN_2,
-    },
-    {
-        "nombre": "Robar carta",
-        "costo": 3,
-        "icono": "本",
-        "color": BLUE,
-        "btn": BLUE_DARK,
-    },
-    {
-        "nombre": "Bonificar",
-        "costo": 4,
-        "icono": "刀",
-        "color": RED,
-        "btn": RED_DARK,
-    },
-]
-
-
-def main(page: ft.Page):
-    page.title = "Contador de acciones del comandante"
-    page.theme_mode = ft.ThemeMode.LIGHT
-    page.bgcolor = SKY
-    page.scroll = ft.ScrollMode.AUTO
-    page.padding = 0
-
-    page.window.width = 430
-    page.window.height = 880
-
-    # =========================
-    # ESTADO DE LA APP
-    # =========================
-    estado = {
-        "inicial": 12,
-        "enderezados": 12,
-        "girados": 0,
+  <style>
+    :root {
+      --sky: #b9d7d2;
+      --paper: #d9c7a3;
+      --dark: #07110d;
+      --ink: #11170f;
+      --green: #1f3b22;
+      --green-2: #2f5a32;
+      --green-3: #4f7b3b;
+      --gold: #d8b05a;
+      --gold-dark: #7a5924;
+      --cream: #f8ebc8;
+      --blue: #2f8ab8;
+      --blue-dark: #16445a;
+      --red: #c95a36;
+      --red-dark: #5a2418;
+      --black-card: #2a2923;
     }
 
-    # =========================
-    # CONTROLES DINÁMICOS
-    # =========================
-    input_tokens = ft.TextField(
-        value="12",
-        width=120,
-        height=62,
-        text_align=ft.TextAlign.CENTER,
-        text_size=32,
-        color=CREAM,
-        bgcolor=INK,
-        border_color=GOLD,
-        focused_border_color=GOLD,
-        border_width=2,
-        border_radius=8,
-    )
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-    inicial_text = ft.Text(
-        "Inicial: 12",
-        size=18,
-        color=GOLD,
-        weight=ft.FontWeight.BOLD,
-        font_family="Georgia",
-    )
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Georgia, "Times New Roman", serif;
+      background:
+        radial-gradient(circle at top, #d8eee8 0%, var(--sky) 25%, var(--paper) 75%, #9b7c4a 100%);
+      color: var(--cream);
+      display: flex;
+      justify-content: center;
+    }
 
-    enderezados_num = ft.Text(
-        "12",
-        size=72,
-        weight=ft.FontWeight.BOLD,
-        color=CREAM,
-        font_family="Georgia",
-        text_align=ft.TextAlign.CENTER,
-    )
+    .app {
+      width: 100%;
+      max-width: 430px;
+      min-height: 100vh;
+      padding: 12px;
+      background:
+        linear-gradient(180deg, rgba(185, 215, 210, 0.85), rgba(217, 199, 163, 0.96)),
+        repeating-linear-gradient(
+          45deg,
+          rgba(122, 89, 36, 0.08) 0,
+          rgba(122, 89, 36, 0.08) 2px,
+          transparent 2px,
+          transparent 8px
+        );
+    }
 
-    girados_num = ft.Text(
-        "0",
-        size=72,
-        weight=ft.FontWeight.BOLD,
-        color=CREAM,
-        font_family="Georgia",
-        text_align=ft.TextAlign.CENTER,
-    )
+    .top-decoration {
+      text-align: center;
+      color: var(--gold-dark);
+      font-size: 22px;
+      margin: 4px 0 8px;
+    }
 
-    usos_texts = [
-        ft.Text(
-            "0",
-            size=42,
-            weight=ft.FontWeight.BOLD,
-            color=a["color"],
-            font_family="Georgia",
-            text_align=ft.TextAlign.CENTER,
-        )
-        for a in ACCIONES
-    ]
+    .header {
+      position: relative;
+      background: linear-gradient(180deg, #17301f, #0b1811);
+      border: 3px solid var(--gold);
+      border-radius: 18px;
+      padding: 16px 14px;
+      text-align: center;
+      box-shadow: 0 5px 16px rgba(0, 0, 0, 0.35);
+      overflow: hidden;
+    }
 
-    botones_usar = []
+    .header::before,
+    .header::after {
+      content: "❀";
+      position: absolute;
+      top: 12px;
+      color: var(--gold);
+      font-size: 22px;
+    }
 
-    # =========================
-    # FUNCIONES
-    # =========================
-    def leer_tokens():
-        try:
-            return max(0, int(input_tokens.value))
-        except ValueError:
-            return 0
+    .header::before {
+      left: 16px;
+    }
 
-    def calcular_usos():
-        for i, accion in enumerate(ACCIONES):
-            usos_texts[i].value = str(estado["enderezados"] // accion["costo"])
+    .header::after {
+      right: 16px;
+    }
 
-    def actualizar_botones():
-        for i, boton in enumerate(botones_usar):
-            costo = ACCIONES[i]["costo"]
+    .kanji {
+      color: var(--gold);
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 8px;
+      margin-bottom: 5px;
+    }
 
-            if estado["enderezados"] >= costo:
-                boton.opacity = 1
-                boton.on_click = usar_accion(i)
-            else:
-                boton.opacity = 0.35
-                boton.on_click = None
+    h1 {
+      margin: 0;
+      color: var(--cream);
+      font-size: 31px;
+      line-height: 0.95;
+      text-shadow: 0 3px 3px rgba(0, 0, 0, 0.55);
+    }
 
-    def refrescar():
-        input_tokens.value = str(estado["enderezados"])
-        inicial_text.value = f"Inicial: {estado['inicial']}"
+    .band {
+      margin: 12px 0 8px;
+      background: linear-gradient(180deg, #234628, #10251c);
+      border: 2px solid var(--gold);
+      border-radius: 14px;
+      padding: 8px 10px;
+      color: var(--gold);
+      font-size: 18px;
+      font-weight: 800;
+      text-align: center;
+      letter-spacing: 1px;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+    }
 
-        enderezados_num.value = str(estado["enderezados"])
-        girados_num.value = str(estado["girados"])
+    .panel {
+      background: linear-gradient(180deg, #244728, #102018);
+      border: 2px solid var(--gold-dark);
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: 0 6px 13px rgba(0, 0, 0, 0.35);
+    }
 
-        calcular_usos()
-        actualizar_botones()
+    .token-input-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 18px;
+      margin-bottom: 12px;
+    }
 
-        page.update()
+    .small-btn {
+      width: 56px;
+      height: 56px;
+      border-radius: 9px;
+      border: 2px solid var(--gold);
+      background: linear-gradient(180deg, #315737, #1a3520);
+      color: var(--cream);
+      font-size: 32px;
+      font-weight: 800;
+      font-family: Georgia, "Times New Roman", serif;
+      cursor: pointer;
+      box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.25);
+    }
 
-    def aplicar_tokens(e=None):
-        valor = leer_tokens()
-        estado["inicial"] = valor
-        estado["enderezados"] = valor
-        estado["girados"] = 0
-        refrescar()
+    #tokensInput {
+      width: 120px;
+      height: 62px;
+      text-align: center;
+      font-size: 34px;
+      font-weight: 800;
+      font-family: Georgia, "Times New Roman", serif;
+      color: var(--cream);
+      background: var(--ink);
+      border: 2px solid var(--gold);
+      border-radius: 9px;
+      outline: none;
+    }
 
-    def enderezar_tokens(e=None):
-        estado["enderezados"] = estado["inicial"]
-        estado["girados"] = 0
-        refrescar()
+    .big-btn {
+      width: 100%;
+      height: 56px;
+      margin-top: 10px;
+      border-radius: 9px;
+      border: 2px solid var(--gold);
+      color: var(--cream);
+      font-size: 23px;
+      font-weight: 800;
+      font-family: Georgia, "Times New Roman", serif;
+      letter-spacing: 1px;
+      cursor: pointer;
+      box-shadow:
+        inset 0 0 0 2px rgba(0, 0, 0, 0.22),
+        0 4px 8px rgba(0, 0, 0, 0.35);
+    }
 
-    def cambiar_input(delta):
-        def accion(e=None):
-            valor = leer_tokens()
-            valor = max(0, valor + delta)
-            input_tokens.value = str(valor)
-            page.update()
+    .apply {
+      background: linear-gradient(180deg, #3a3a34, #171a17);
+    }
 
-        return accion
+    .untap {
+      background: linear-gradient(180deg, #4f7b3b, #244c25);
+    }
 
-    def usar_accion(indice):
-        def accion(e=None):
-            costo = ACCIONES[indice]["costo"]
+    .initial {
+      margin-top: 12px;
+      color: var(--gold);
+      font-size: 18px;
+      font-weight: 800;
+      text-align: center;
+    }
 
-            if estado["enderezados"] >= costo:
-                estado["enderezados"] -= costo
-                estado["girados"] += costo
+    .actions-panel {
+      background: linear-gradient(180deg, #0f2117, #07110d);
+    }
 
-            refrescar()
+    .action-row {
+      display: grid;
+      grid-template-columns: 64px 1fr 58px 84px;
+      gap: 10px;
+      align-items: center;
+      background: #102018;
+      border: 1.5px solid var(--gold-dark);
+      border-radius: 11px;
+      padding: 10px;
+      margin-bottom: 8px;
+    }
 
-        return accion
+    .action-row:last-child {
+      margin-bottom: 0;
+    }
 
-    # =========================
-    # COMPONENTES VISUALES
-    # =========================
-    def borde(ancho=1.5, color=GOLD_DARK):
-        return ft.Border.all(ancho, color)
+    .icon {
+      width: 62px;
+      height: 62px;
+      border-radius: 50%;
+      border: 3px solid var(--gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--cream);
+      font-size: 30px;
+      font-weight: 800;
+      box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.45);
+    }
 
-    def panel(content, bgcolor=CARD_GREEN, padding=12, radius=12):
-        return ft.Container(
-            bgcolor=bgcolor,
-            border=borde(2, GOLD_DARK),
-            border_radius=radius,
-            padding=padding,
-            shadow=ft.BoxShadow(
-                spread_radius=1,
-                blur_radius=8,
-                color="#55000000",
-                offset=ft.Offset(0, 4),
-            ),
-            content=content,
-        )
+    .icon.green {
+      background: var(--green-2);
+    }
 
-    def titulo_banda(texto):
-        return ft.Container(
-            bgcolor=CARD_GREEN,
-            border=borde(2, GOLD),
-            border_radius=12,
-            padding=8,
-            alignment=ft.Alignment.CENTER,
-            content=ft.Row(
-                alignment=ft.MainAxisAlignment.CENTER,
-                controls=[
-                    ft.Text("❀", color=GOLD, size=18),
-                    ft.Text(
-                        texto,
-                        size=18,
-                        color=GOLD,
-                        weight=ft.FontWeight.BOLD,
-                        font_family="Georgia",
-                    ),
-                    ft.Text("❀", color=GOLD, size=18),
-                ],
-            ),
-        )
+    .icon.blue {
+      background: var(--blue-dark);
+    }
 
-    def boton_rect(texto, bgcolor, on_click, height=56):
-        return ft.Container(
-            height=height,
-            bgcolor=bgcolor,
-            border=borde(2, GOLD),
-            border_radius=8,
-            alignment=ft.Alignment.CENTER,
-            on_click=on_click,
-            content=ft.Text(
-                texto,
-                size=22,
-                color=CREAM,
-                weight=ft.FontWeight.BOLD,
-                font_family="Georgia",
-            ),
-        )
+    .icon.red {
+      background: var(--red-dark);
+    }
 
-    def boton_cuadrado(texto, on_click):
-        return ft.Container(
-            width=56,
-            height=56,
-            bgcolor=CARD_GREEN,
-            border=borde(2, GOLD),
-            border_radius=8,
-            alignment=ft.Alignment.CENTER,
-            on_click=on_click,
-            content=ft.Text(
-                texto,
-                size=30,
-                color=CREAM,
-                weight=ft.FontWeight.BOLD,
-                font_family="Georgia",
-            ),
-        )
+    .action-name {
+      font-size: 19px;
+      font-weight: 800;
+      color: var(--cream);
+      margin-bottom: 4px;
+    }
 
-    def circulo_icono(texto, color):
-        return ft.Container(
-            width=62,
-            height=62,
-            bgcolor=color,
-            border=borde(3, GOLD),
-            border_radius=40,
-            alignment=ft.Alignment.CENTER,
-            content=ft.Text(
-                texto,
-                size=30,
-                color=CREAM,
-                weight=ft.FontWeight.BOLD,
-                font_family="Georgia",
-            ),
-        )
+    .cost {
+      font-size: 16px;
+      font-weight: 800;
+    }
 
-    def fila_accion(i, accion):
-        boton = ft.Container(
-            width=86,
-            height=46,
-            bgcolor=accion["btn"],
-            border=borde(2, GOLD),
-            border_radius=8,
-            alignment=ft.Alignment.CENTER,
-            on_click=usar_accion(i),
-            content=ft.Text(
-                "USAR",
-                size=16,
-                color=CREAM,
-                weight=ft.FontWeight.BOLD,
-                font_family="Georgia",
-            ),
-        )
+    .cost.green {
+      color: var(--green-3);
+    }
 
-        botones_usar.append(boton)
+    .cost.blue {
+      color: var(--blue);
+    }
 
-        return ft.Container(
-            bgcolor="#102018",
-            border=borde(1.5, GOLD_DARK),
-            border_radius=10,
-            padding=10,
-            content=ft.Row(
-                spacing=10,
-                vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                controls=[
-                    circulo_icono(accion["icono"], accion["btn"]),
+    .cost.red {
+      color: var(--red);
+    }
 
-                    ft.Column(
-                        expand=True,
-                        spacing=4,
-                        controls=[
-                            ft.Text(
-                                f"{i + 1}. {accion['nombre']}",
-                                size=19,
-                                color=CREAM,
-                                weight=ft.FontWeight.BOLD,
-                                font_family="Georgia",
-                            ),
-                            ft.Text(
-                                f"Costo: {accion['costo']} tokens",
-                                size=16,
-                                color=accion["color"],
-                                weight=ft.FontWeight.BOLD,
-                                font_family="Georgia",
-                            ),
-                        ],
-                    ),
+    .uses {
+      text-align: center;
+      line-height: 1;
+    }
 
-                    ft.Column(
-                        width=58,
-                        spacing=0,
-                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                        controls=[
-                            usos_texts[i],
-                            ft.Text(
-                                "veces",
-                                size=13,
-                                color=CREAM,
-                                font_family="Georgia",
-                            ),
-                        ],
-                    ),
+    .uses-number {
+      font-size: 42px;
+      font-weight: 800;
+    }
 
-                    boton,
-                ],
-            ),
-        )
+    .uses-label {
+      font-size: 13px;
+      color: var(--cream);
+    }
 
-    def carta_token(titulo, numero_control, color_titulo, fondo, girada=False):
-        carta = ft.Container(
-            width=150,
-            height=190,
-            bgcolor=fondo,
-            border=borde(3, GOLD),
-            border_radius=12,
-            padding=8,
-            content=ft.Stack(
-                controls=[
-                    ft.Container(
-                        left=5,
-                        top=5,
-                        right=5,
-                        bottom=5,
-                        border=borde(1.5, GOLD_DARK),
-                        border_radius=8,
-                    ),
-                    ft.Container(
-                        top=12,
-                        left=0,
-                        right=0,
-                        content=ft.Text(
-                            titulo,
-                            size=14,
-                            color=color_titulo,
-                            weight=ft.FontWeight.BOLD,
-                            text_align=ft.TextAlign.CENTER,
-                            font_family="Georgia",
-                        ),
-                    ),
-                    ft.Container(
-                        top=52,
-                        left=0,
-                        right=0,
-                        bottom=38,
-                        alignment=ft.Alignment.CENTER,
-                        content=numero_control,
-                    ),
-                    ft.Container(
-                        bottom=10,
-                        left=0,
-                        right=0,
-                        content=ft.Text(
-                            "❀",
-                            size=24,
-                            color=color_titulo,
-                            text_align=ft.TextAlign.CENTER,
-                        ),
-                    ),
-                ],
-            ),
-        )
+    .use-btn {
+      width: 84px;
+      height: 46px;
+      border-radius: 8px;
+      border: 2px solid var(--gold);
+      color: var(--cream);
+      font-size: 16px;
+      font-weight: 800;
+      font-family: Georgia, "Times New Roman", serif;
+      cursor: pointer;
+      box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.22);
+    }
 
-        if girada:
-            carta.rotate = ft.Rotate(angle=math.pi / 18)
+    .use-btn:disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
 
-        return carta
+    .use-btn.green {
+      background: linear-gradient(180deg, #3f7239, #234d28);
+    }
 
-    # =========================
-    # HEADER
-    # =========================
-    header = ft.Container(
-        padding=16,
-        gradient=ft.LinearGradient(
-            begin=ft.Alignment.TOP_CENTER,
-            end=ft.Alignment.BOTTOM_CENTER,
-            colors=[SKY, BG],
-        ),
-        content=ft.Column(
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            spacing=8,
-            controls=[
-                ft.Row(
-                    alignment=ft.MainAxisAlignment.CENTER,
-                    controls=[
-                        ft.Text("☁", color=CREAM, size=26),
-                        ft.Text("兎   宮   本", color=GOLD_DARK, size=22, weight=ft.FontWeight.BOLD),
-                        ft.Text("☁", color=CREAM, size=26),
-                    ],
-                ),
-                panel(
-                    bgcolor="#17301F",
-                    padding=14,
-                    radius=16,
-                    content=ft.Text(
-                        "Contador de acciones\ndel comandante",
-                        size=31,
-                        color=CREAM,
-                        weight=ft.FontWeight.BOLD,
-                        text_align=ft.TextAlign.CENTER,
-                        font_family="Georgia",
-                    ),
-                ),
-            ],
-        ),
-    )
+    .use-btn.blue {
+      background: linear-gradient(180deg, #2f8ab8, #16445a);
+    }
 
-    # =========================
-    # TOKENS DISPONIBLES
-    # =========================
-    tokens_panel = panel(
-        bgcolor="#244728",
-        padding=14,
-        content=ft.Column(
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            spacing=12,
-            controls=[
-                ft.Row(
-                    alignment=ft.MainAxisAlignment.CENTER,
-                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                    spacing=18,
-                    controls=[
-                        boton_cuadrado("−", cambiar_input(-1)),
-                        input_tokens,
-                        boton_cuadrado("+", cambiar_input(1)),
-                    ],
-                ),
-                boton_rect("APLICAR", BLACK_CARD, aplicar_tokens),
-                boton_rect("ENDEREZAR", CARD_GREEN_2, enderezar_tokens),
-                inicial_text,
-            ],
-        ),
-    )
+    .use-btn.red {
+      background: linear-gradient(180deg, #c95a36, #5a2418);
+    }
 
-    # =========================
-    # ACCIONES
-    # =========================
-    acciones_panel = panel(
-        bgcolor="#0B1711",
-        padding=10,
-        content=ft.Column(
-            spacing=8,
-            controls=[
-                fila_accion(0, ACCIONES[0]),
-                fila_accion(1, ACCIONES[1]),
-                fila_accion(2, ACCIONES[2]),
-            ],
-        ),
-    )
+    .green-text {
+      color: var(--green-3);
+    }
 
-    # =========================
-    # ESTADO DE TOKENS
-    # =========================
-    estado_panel = panel(
-        bgcolor="#0B1711",
-        padding=12,
-        content=ft.Row(
-            alignment=ft.MainAxisAlignment.SPACE_EVENLY,
-            vertical_alignment=ft.CrossAxisAlignment.CENTER,
-            controls=[
-                ft.Column(
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                    controls=[
-                        carta_token(
-                            "TOKENS\nENDEREZADOS",
-                            enderezados_num,
-                            CARD_GREEN_3,
-                            "#244728",
-                            girada=False,
-                        ),
-                    ],
-                ),
-                ft.Column(
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                    controls=[
-                        carta_token(
-                            "TOKENS\nGIRADOS",
-                            girados_num,
-                            RED,
-                            BLACK_CARD,
-                            girada=True,
-                        ),
-                    ],
-                ),
-            ],
-        ),
-    )
+    .blue-text {
+      color: var(--blue);
+    }
 
-    # =========================
-    # LAYOUT FINAL
-    # =========================
-    page.add(
-        ft.Container(
-            gradient=ft.LinearGradient(
-                begin=ft.Alignment.TOP_CENTER,
-                end=ft.Alignment.BOTTOM_CENTER,
-                colors=[SKY, BG, "#9B7C4A"],
-            ),
-            content=ft.Column(
-                spacing=12,
-                controls=[
-                    header,
+    .red-text {
+      color: var(--red);
+    }
 
-                    ft.Container(
-                        padding=14,
-                        content=ft.Column(
-                            spacing=12,
-                            controls=[
-                                titulo_banda("TOKENS DISPONIBLES"),
-                                tokens_panel,
+    .status-panel {
+      background: linear-gradient(180deg, #0b1711, #07110d);
+      display: flex;
+      gap: 12px;
+      justify-content: space-between;
+    }
 
-                                titulo_banda("ACCIONES POSIBLES"),
-                                acciones_panel,
+    .token-card-wrap {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+    }
 
-                                titulo_banda("ESTADO DE LOS TOKENS"),
-                                estado_panel,
+    .token-card {
+      width: 150px;
+      height: 190px;
+      border: 3px solid var(--gold);
+      border-radius: 13px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 7px 14px rgba(0, 0, 0, 0.45);
+    }
 
-                                ft.Container(
-                                    alignment=ft.Alignment.CENTER,
-                                    content=ft.Text(
-                                        "🍁   ✦   花   ✦   🍁",
-                                        size=22,
-                                        color=GOLD_DARK,
-                                    ),
-                                ),
-                                ft.Container(height=20),
-                            ],
-                        ),
-                    ),
-                ],
-            ),
-        )
-    )
+    .token-card::before {
+      content: "";
+      position: absolute;
+      inset: 7px;
+      border: 1.5px solid var(--gold-dark);
+      border-radius: 9px;
+    }
 
-    refrescar()
+    .token-card.enderezado {
+      background:
+        radial-gradient(circle at 50% 60%, rgba(248, 235, 200, 0.15), transparent 42%),
+        linear-gradient(180deg, #355f35, #1c341e);
+    }
 
+    .token-card.girado {
+      background:
+        radial-gradient(circle at 50% 60%, rgba(248, 235, 200, 0.12), transparent 42%),
+        linear-gradient(180deg, #34342f, #171a17);
+      transform: rotate(5deg);
+    }
 
-ft.run(main)
+    .token-card-title {
+      position: absolute;
+      top: 15px;
+      left: 8px;
+      right: 8px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 800;
+      line-height: 1.05;
+    }
+
+    .token-card-number {
+      position: absolute;
+      top: 55px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-size: 72px;
+      font-weight: 800;
+      color: var(--cream);
+      text-shadow: 0 3px 3px rgba(0, 0, 0, 0.65);
+    }
+
+    .token-flower {
+      position: absolute;
+      bottom: 12px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-size: 25px;
+    }
+
+    .footer {
+      text-align: center;
+      color: var(--gold-dark);
+      font-size: 22px;
+      margin: 12px 0 22px;
+    }
+
+    @media (max-width: 390px) {
+      h1 {
+        font-size: 28px;
+      }
+
+      .action-row {
+        grid-template-columns: 56px 1fr 50px 74px;
+        gap: 8px;
+        padding: 9px;
+      }
+
+      .icon {
+        width: 54px;
+        height: 54px;
+        font-size: 26px;
+      }
+
+      .action-name {
+        font-size: 17px;
+      }
+
+      .cost {
+        font-size: 14px;
+      }
+
+      .uses-number {
+        font-size: 36px;
+      }
+
+      .use-btn {
+        width: 74px;
+        font-size: 14px;
+      }
+
+      .token-card {
+        width: 135px;
+        height: 180px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="app">
+    <div class="top-decoration">☁　❀　☁</div>
+
+    <section class="header">
+      <div class="kanji">兎 宮 本</div>
+      <h1>Contador de acciones<br />del comandante</h1>
+    </section>
+
+    <div class="band">❀ TOKENS DISPONIBLES ❀</div>
+
+    <section class="panel">
+      <div class="token-input-row">
+        <button class="small-btn" onclick="cambiarInput(-1)">−</button>
+        <input id="tokensInput" type="number" min="0" value="12" />
+        <button class="small-btn" onclick="cambiarInput(1)">+</button>
+      </div>
+
+      <button class="big-btn apply" onclick="aplicarTokens()">APLICAR</button>
+      <button class="big-btn untap" onclick="enderezarTokens()">ENDEREZAR</button>
+
+      <div id="initialText" class="initial">Inicial: 12</div>
+    </section>
+
+    <div class="band">❀ ACCIONES POSIBLES ❀</div>
+
+    <section class="panel actions-panel">
+      <div class="action-row">
+        <div class="icon green">木</div>
+
+        <div>
+          <div class="action-name">1. Agregar maná</div>
+          <div class="cost green">Costo: 2 tokens</div>
+        </div>
+
+        <div class="uses">
+          <div id="manaUses" class="uses-number green-text">6</div>
+          <div class="uses-label">veces</div>
+        </div>
+
+        <button id="manaBtn" class="use-btn green" onclick="usarAccion(2)">USAR</button>
+      </div>
+
+      <div class="action-row">
+        <div class="icon blue">本</div>
+
+        <div>
+          <div class="action-name">2. Robar carta</div>
+          <div class="cost blue">Costo: 3 tokens</div>
+        </div>
+
+        <div class="uses">
+          <div id="drawUses" class="uses-number blue-text">4</div>
+          <div class="uses-label">veces</div>
+        </div>
+
+        <button id="drawBtn" class="use-btn blue" onclick="usarAccion(3)">USAR</button>
+      </div>
+
+      <div class="action-row">
+        <div class="icon red">刀</div>
+
+        <div>
+          <div class="action-name">3. Bonificar</div>
+          <div class="cost red">Costo: 4 tokens</div>
+        </div>
+
+        <div class="uses">
+          <div id="bonusUses" class="uses-number red-text">3</div>
+          <div class="uses-label">veces</div>
+        </div>
+
+        <button id="bonusBtn" class="use-btn red" onclick="usarAccion(4)">USAR</button>
+      </div>
+    </section>
+
+    <div class="band">❀ ESTADO DE LOS TOKENS ❀</div>
+
+    <section class="panel status-panel">
+      <div class="token-card-wrap">
+        <div class="token-card enderezado">
+          <div class="token-card-title green-text">TOKENS<br />ENDEREZADOS</div>
+          <div id="untappedCard" class="token-card-number">12</div>
+          <div class="token-flower green-text">❀</div>
+        </div>
+      </div>
+
+      <div class="token-card-wrap">
+        <div class="token-card girado">
+          <div class="token-card-title red-text">TOKENS<br />GIRADOS</div>
+          <div id="tappedCard" class="token-card-number">0</div>
+          <div class="token-flower red-text">❀</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="footer">🍁　✦　花　✦　🍁</div>
+  </main>
+
+  <script>
+    let initialTokens = 12;
+    let untappedTokens = 12;
+    let tappedTokens = 0;
+
+    const tokensInput = document.getElementById("tokensInput");
+    const initialText = document.getElementById("initialText");
+
+    const manaUses = document.getElementById("manaUses");
+    const drawUses = document.getElementById("drawUses");
+    const bonusUses = document.getElementById("bonusUses");
+
+    const manaBtn = document.getElementById("manaBtn");
+    const drawBtn = document.getElementById("drawBtn");
+    const bonusBtn = document.getElementById("bonusBtn");
+
+    const untappedCard = document.getElementById("untappedCard");
+    const tappedCard = document.getElementById("tappedCard");
+
+    function leerInput() {
+      const value = parseInt(tokensInput.value, 10);
+      if (isNaN(value) || value < 0) return 0;
+      return value;
+    }
+
+    function cambiarInput(delta) {
+      const actual = leerInput();
+      tokensInput.value = Math.max(0, actual + delta);
+    }
+
+    function aplicarTokens() {
+      initialTokens = leerInput();
+      untappedTokens = initialTokens;
+      tappedTokens = 0;
+      actualizar();
+    }
+
+    function enderezarTokens() {
+      untappedTokens = initialTokens;
+      tappedTokens = 0;
+      actualizar();
+    }
+
+    function usarAccion(costo) {
+      if (untappedTokens >= costo) {
+        untappedTokens -= costo;
+        tappedTokens += costo;
+        actualizar();
+      }
+    }
+
+    function actualizar() {
+      initialText.textContent = `Inicial: ${initialTokens}`;
+
+      tokensInput.value = untappedTokens;
+
+      untappedCard.textContent = untappedTokens;
+      tappedCard.textContent = tappedTokens;
+
+      manaUses.textContent = Math.floor(untappedTokens / 2);
+      drawUses.textContent = Math.floor(untappedTokens / 3);
+      bonusUses.textContent = Math.floor(untappedTokens / 4);
+
+      manaBtn.disabled = untappedTokens < 2;
+      drawBtn.disabled = untappedTokens < 3;
+      bonusBtn.disabled = untappedTokens < 4;
+    }
+
+    tokensInput.addEventListener("change", () => {
+      if (leerInput() < 0) tokensInput.value = 0;
+    });
+
+    actualizar();
+  </script>
+</body>
+</html>
