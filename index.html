@@ -1,445 +1,599 @@
+import flet as ft
+import math
 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="10K Sub 40">
-<meta name="theme-color" content="#07070D">
-<title>10K Sub 40 · Joaquin</title>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  body { background: #07070D; color: #E0E0EE; font-family: 'Courier New', Courier, monospace; min-height: 100vh; padding-bottom: env(safe-area-inset-bottom); }
 
-  .top-header { background: #0C0C16; border-bottom: 1px solid #1A1A2E; padding: 52px 18px 14px; }
-  .top-label { font-size: 10px; letter-spacing: 4px; color: #333; margin-bottom: 6px; }
-  .top-title { display: flex; align-items: baseline; gap: 10px; }
-  .top-title .white { font-size: 28px; font-weight: 900; color: #fff; letter-spacing: -1px; }
-  .top-title .red { font-size: 28px; font-weight: 900; color: #E63946; letter-spacing: -1px; }
-  .top-sub { font-size: 10px; color: #333; letter-spacing: 2px; margin-top: 2px; }
+# =========================
+# COLORES ESTILO CARTA ORIENTAL
+# =========================
+SKY = "#B9D7D2"
+SKY_DARK = "#6F918B"
 
-  .month-tabs { display: flex; overflow-x: auto; border-bottom: 1px solid #1A1A2E; background: #0A0A14; scrollbar-width: none; }
-  .month-tabs::-webkit-scrollbar { display: none; }
-  .month-tab { flex-shrink: 0; padding: 12px 14px; background: transparent; border: none; border-bottom: 2px solid transparent; color: #333; cursor: pointer; font-family: inherit; font-size: 10px; letter-spacing: 2px; font-weight: 700; line-height: 1.4; text-align: center; }
-  .month-tab.active { border-bottom-color: var(--c); color: var(--c); }
-  .month-tab .phase-mini { font-size: 8px; opacity: 0.6; margin-top: 2px; }
+BG = "#D9C7A3"
+INK = "#11170F"
 
-  .month-header { padding: 16px 18px 12px; background: #0C0C16; border-bottom: 1px solid #1A1A2E; }
-  .month-header-row { display: flex; justify-content: space-between; align-items: flex-start; }
-  .month-name { font-size: 22px; font-weight: 900; letter-spacing: 1px; }
-  .month-year { color: #333; font-size: 14px; }
-  .month-phase { font-size: 10px; color: #555; letter-spacing: 2px; margin-top: 2px; }
-  .month-km { text-align: right; }
-  .month-km .km-num { font-size: 20px; font-weight: 900; }
-  .month-km .km-label { font-size: 9px; color: #444; letter-spacing: 1px; }
-  .month-focus { margin-top: 10px; padding: 8px 10px; background: #12121E; font-size: 10px; color: #888; line-height: 1.5; border-left: 2px solid var(--c); }
-  .month-target { margin-top: 6px; font-size: 10px; color: #555; }
+CARD_GREEN = "#1F3B22"
+CARD_GREEN_2 = "#2F5A32"
+CARD_GREEN_3 = "#4F7B3B"
 
-  .week-selector { display: flex; gap: 6px; padding: 12px 18px; background: #07070D; }
-  .week-btn { flex: 1; padding: 8px 4px; background: #0F0F1A; border: 1px solid #1A1A2E; border-radius: 4px; color: #444; cursor: pointer; font-size: 9px; font-weight: 700; letter-spacing: 1px; font-family: inherit; line-height: 1.4; text-align: center; }
-  .week-btn.active { color: #000; }
-  .week-btn .descarga-label { font-size: 7px; opacity: 0.8; }
+GOLD = "#D8B05A"
+GOLD_DARK = "#7A5924"
+CREAM = "#F8EBC8"
+PAPER = "#EBD7A8"
 
-  .week-label-row { padding: 0 18px 8px; display: flex; justify-content: space-between; align-items: center; }
-  .week-label { font-size: 10px; font-weight: 700; letter-spacing: 2px; }
-  .descarga-badge { font-size: 9px; color: #F1C40F; letter-spacing: 2px; }
-  .race-badge { font-size: 9px; color: #FFD700; letter-spacing: 2px; }
+BLUE = "#2F8AB8"
+BLUE_DARK = "#16445A"
 
-  .days { padding: 0 14px 16px; }
-  .day-card { margin-bottom: 6px; border: 1px solid #1A1A2E; border-radius: 5px; overflow: hidden; }
-  .day-card.expanded { border-color: var(--tc-alpha); }
-  .day-card.race-day { background: #1A0A00; }
-  .day-header { width: 100%; padding: 12px 14px; background: #0C0C14; border: none; color: #E0E0EE; cursor: pointer; display: flex; align-items: center; gap: 10px; font-family: inherit; text-align: left; }
-  .day-card.expanded .day-header { background: #0F0F1A; }
-  .day-bar { width: 3px; height: 32px; border-radius: 2px; flex-shrink: 0; }
-  .day-info { flex: 1; }
-  .day-top { display: flex; justify-content: space-between; align-items: center; }
-  .day-name { font-size: 12px; font-weight: 700; letter-spacing: 1px; }
-  .day-km { font-size: 14px; font-weight: 900; }
-  .day-type { font-size: 9px; letter-spacing: 2px; margin-top: 1px; opacity: 0.85; }
-  .day-chevron { color: #2A2A3A; font-size: 14px; transition: transform 0.2s; }
-  .day-card.expanded .day-chevron { transform: rotate(180deg); }
+RED = "#C95A36"
+RED_DARK = "#5A2418"
 
-  .segments { background: #080810; border-top: 1px solid rgba(255,255,255,0.05); }
-  .seg-header { display: grid; grid-template-columns: 80px 75px 1fr; padding: 6px 14px; font-size: 8px; color: #2A2A3A; letter-spacing: 2px; border-bottom: 1px solid #0F0F18; }
-  .seg-row { display: grid; grid-template-columns: 80px 75px 1fr; padding: 9px 14px; border-bottom: 1px solid #0F0F18; align-items: center; }
-  .seg-row:last-child { border-bottom: none; }
-  .seg-dist { font-size: 12px; font-weight: 700; color: #E0E0EE; }
-  .seg-pace { font-size: 11px; font-weight: 700; font-family: inherit; }
-  .seg-desc { font-size: 10px; color: #4A4A6A; }
+BLACK_CARD = "#2A2923"
+SHADOW = "#000000"
 
-  .week-summary { margin: 0 14px 20px; padding: 12px 14px; background: #0C0C16; border: 1px solid #1A1A2E; border-radius: 5px; }
-  .summary-label { font-size: 9px; letter-spacing: 3px; color: #2A2A3A; margin-bottom: 10px; }
-  .summary-stats { display: flex; justify-content: space-around; }
-  .stat { text-align: center; }
-  .stat-val { font-size: 18px; font-weight: 900; }
-  .stat-label { font-size: 8px; color: #2A2A3A; letter-spacing: 1px; margin-top: 3px; }
 
-  .footer { padding: 12px 18px; border-top: 1px solid #1A1A2E; font-size: 9px; color: #1A1A2A; letter-spacing: 1px; text-align: center; }
+ACCIONES = [
+    {
+        "nombre": "Agregar maná",
+        "costo": 2,
+        "icono": "木",
+        "color": CARD_GREEN_3,
+        "btn": CARD_GREEN_2,
+    },
+    {
+        "nombre": "Robar carta",
+        "costo": 3,
+        "icono": "本",
+        "color": BLUE,
+        "btn": BLUE_DARK,
+    },
+    {
+        "nombre": "Bonificar",
+        "costo": 4,
+        "icono": "刀",
+        "color": RED,
+        "btn": RED_DARK,
+    },
+]
 
-  .install-banner { display: none; background: #12121E; border: 1px solid #2A2A4A; margin: 12px 14px; border-radius: 6px; padding: 12px 14px; font-size: 10px; color: #888; line-height: 1.6; }
-  .install-banner.show { display: block; }
-  .install-banner strong { color: #3ECFAA; }
-  .install-close { float: right; background: none; border: none; color: #555; font-size: 16px; cursor: pointer; font-family: inherit; margin-top: -2px; }
-</style>
-</head>
-<body>
 
-<div class="top-header">
-  <div class="top-label">JOAQUIN MADARIAGA · VO₂MÁX 61 · 76 KG · 1.81 M</div>
-  <div class="top-title">
-    <span class="white">10K</span>
-    <span class="red">SUB 40:00</span>
-  </div>
-  <div class="top-sub">27 MAY 2026 → 27 NOV 2026 · 6 MESES</div>
-</div>
+def main(page: ft.Page):
+    page.title = "Contador de acciones del comandante"
+    page.theme_mode = ft.ThemeMode.LIGHT
+    page.bgcolor = SKY
+    page.scroll = ft.ScrollMode.AUTO
+    page.padding = 0
 
-<div id="installBanner" class="install-banner">
-  <button class="install-close" onclick="document.getElementById('installBanner').classList.remove('show')">✕</button>
-  <strong>Agregar a pantalla de inicio:</strong><br>
-  Toca el ícono <strong>compartir ↑</strong> en Safari → <strong>"Añadir a pantalla de inicio"</strong> → se instala como app sin barras del navegador.
-</div>
+    page.window.width = 430
+    page.window.height = 880
 
-<div class="month-tabs" id="monthTabs"></div>
-<div id="monthHeader"></div>
-<div class="week-selector" id="weekSelector"></div>
-<div class="week-label-row" id="weekLabelRow"></div>
-<div class="days" id="daysContainer"></div>
-<div class="week-summary" id="weekSummary"></div>
-<div class="footer">OBJETIVO: 10K EN 39:50 · 27 NOV 2026</div>
+    # =========================
+    # ESTADO DE LA APP
+    # =========================
+    estado = {
+        "inicial": 12,
+        "enderezados": 12,
+        "girados": 0,
+    }
 
-<script>
-const MONTHS = [
-  {
-    month:"JUNIO",year:"2026",phase:"FASE 1",phaseLabel:"Base de Velocidad",color:"#3ECFAA",
-    focus:"Acostumbrar las piernas al ritmo objetivo sin destruir la base aeróbica",
-    target:"Series 1km a 4:10/km · Fondo a 5:30/km",totalKm:192,
-    weeks:[
-      { label:"S1 · 2–7 Jun",descarga:false, days:[
-        {day:"MAR",type:"Fácil",km:10,segs:[{d:"2 km",p:"6:00/km",t:"Calentamiento"},{d:"6 km",p:"5:40/km",t:"Aeróbico base"},{d:"2 km",p:"6:00/km",t:"Enfriamiento"}]},
-        {day:"MIÉ",type:"Series",km:10,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"5×1 km",p:"4:10/km",t:"Series intensas"},{d:"5×200 m",p:"trote",t:"Recup. entre series"},{d:"1.5 km",p:"6:00/km",t:"Enfriamiento"}]},
-        {day:"VIE",type:"Progresivo",km:10,segs:[{d:"3 km",p:"5:50/km",t:"Calentamiento"},{d:"4 km",p:"5:10/km",t:"Ritmo medio"},{d:"3 km",p:"4:30/km",t:"Progresivo final"}]},
-        {day:"DOM",type:"Fondo",km:18,segs:[{d:"3 km",p:"5:50/km",t:"Entrada en calor"},{d:"12 km",p:"5:30/km",t:"Fondo aeróbico"},{d:"3 km",p:"5:50/km",t:"Cierre suave"}]},
-      ]},
-      { label:"S2 · 9–14 Jun",descarga:false, days:[
-        {day:"MAR",type:"Fácil",km:10,segs:[{d:"2 km",p:"6:00/km",t:"Calentamiento"},{d:"6 km",p:"5:35/km",t:"Aeróbico base"},{d:"2 km",p:"6:00/km",t:"Enfriamiento"}]},
-        {day:"MIÉ",type:"Series",km:10,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"6×1 km",p:"4:08/km",t:"Series intensas"},{d:"6×200 m",p:"trote",t:"Recup. entre series"},{d:"1 km",p:"6:00/km",t:"Enfriamiento"}]},
-        {day:"VIE",type:"Progresivo",km:10,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"5 km",p:"5:05/km",t:"Ritmo medio"},{d:"3 km",p:"4:25/km",t:"Progresivo final"}]},
-        {day:"DOM",type:"Fondo",km:18,segs:[{d:"3 km",p:"5:50/km",t:"Entrada en calor"},{d:"12 km",p:"5:25/km",t:"Fondo aeróbico"},{d:"3 km",p:"5:50/km",t:"Cierre suave"}]},
-      ]},
-      { label:"S3 · 16–21 Jun",descarga:false, days:[
-        {day:"MAR",type:"Fácil",km:10,segs:[{d:"2 km",p:"6:00/km",t:"Calentamiento"},{d:"6 km",p:"5:30/km",t:"Aeróbico base"},{d:"2 km",p:"6:00/km",t:"Enfriamiento"}]},
-        {day:"MIÉ",type:"Series",km:11,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"6×1 km",p:"4:05/km",t:"Series intensas"},{d:"6×200 m",p:"trote",t:"Recup. entre series"},{d:"1.5 km",p:"6:00/km",t:"Enfriamiento"}]},
-        {day:"VIE",type:"Progresivo",km:10,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"5 km",p:"5:00/km",t:"Ritmo medio"},{d:"3 km",p:"4:20/km",t:"Progresivo final"}]},
-        {day:"DOM",type:"Fondo",km:21,segs:[{d:"3 km",p:"5:50/km",t:"Entrada en calor"},{d:"15 km",p:"5:25/km",t:"Fondo aeróbico"},{d:"3 km",p:"5:40/km",t:"Cierre suave"}]},
-      ]},
-      { label:"S4 · 23–28 Jun",descarga:true, days:[
-        {day:"MAR",type:"Recuperación",km:8,segs:[{d:"8 km",p:"5:50/km",t:"Todo suave — semana descarga"}]},
-        {day:"MIÉ",type:"Series ↓",km:8,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"4×1 km",p:"4:10/km",t:"Volumen reducido"},{d:"4×200 m",p:"trote",t:"Recuperación"},{d:"1 km",p:"6:00/km",t:"Enfriamiento"}]},
-        {day:"VIE",type:"Fácil",km:8,segs:[{d:"8 km",p:"5:40/km",t:"Rodaje suave"}]},
-        {day:"DOM",type:"Fondo corto",km:15,segs:[{d:"3 km",p:"5:50/km",t:"Entrada en calor"},{d:"9 km",p:"5:30/km",t:"Fondo suave"},{d:"3 km",p:"5:50/km",t:"Cierre"}]},
-      ]},
+    # =========================
+    # CONTROLES DINÁMICOS
+    # =========================
+    input_tokens = ft.TextField(
+        value="12",
+        width=120,
+        height=62,
+        text_align=ft.TextAlign.CENTER,
+        text_size=32,
+        color=CREAM,
+        bgcolor=INK,
+        border_color=GOLD,
+        focused_border_color=GOLD,
+        border_width=2,
+        border_radius=8,
+    )
+
+    inicial_text = ft.Text(
+        "Inicial: 12",
+        size=18,
+        color=GOLD,
+        weight=ft.FontWeight.BOLD,
+        font_family="Georgia",
+    )
+
+    enderezados_num = ft.Text(
+        "12",
+        size=72,
+        weight=ft.FontWeight.BOLD,
+        color=CREAM,
+        font_family="Georgia",
+        text_align=ft.TextAlign.CENTER,
+    )
+
+    girados_num = ft.Text(
+        "0",
+        size=72,
+        weight=ft.FontWeight.BOLD,
+        color=CREAM,
+        font_family="Georgia",
+        text_align=ft.TextAlign.CENTER,
+    )
+
+    usos_texts = [
+        ft.Text(
+            "0",
+            size=42,
+            weight=ft.FontWeight.BOLD,
+            color=a["color"],
+            font_family="Georgia",
+            text_align=ft.TextAlign.CENTER,
+        )
+        for a in ACCIONES
     ]
-  },
-  {
-    month:"JULIO",year:"2026",phase:"FASE 1",phaseLabel:"Base de Velocidad",color:"#3ECFAA",
-    focus:"Consolidar la base. Series más largas, ritmo más estable en subida",
-    target:"Series 1km a 4:00/km · Progresivos hasta 4:10/km",totalKm:200,
-    weeks:[
-      { label:"S1 · 1–5 Jul",descarga:false, days:[
-        {day:"MAR",type:"Fácil",km:10,segs:[{d:"2 km",p:"6:00/km",t:"Calentamiento"},{d:"6 km",p:"5:25/km",t:"Aeróbico base"},{d:"2 km",p:"6:00/km",t:"Enfriamiento"}]},
-        {day:"MIÉ",type:"Series",km:11,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"6×1 km",p:"4:03/km",t:"Series intensas"},{d:"6×200 m",p:"trote",t:"Recup. entre series"},{d:"1.5 km",p:"6:00/km",t:"Enfriamiento"}]},
-        {day:"VIE",type:"Progresivo",km:10,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"5 km",p:"4:55/km",t:"Ritmo medio"},{d:"3 km",p:"4:15/km",t:"Progresivo final"}]},
-        {day:"DOM",type:"Fondo",km:21,segs:[{d:"3 km",p:"5:40/km",t:"Entrada en calor"},{d:"15 km",p:"5:20/km",t:"Fondo aeróbico"},{d:"3 km",p:"5:40/km",t:"Cierre suave"}]},
-      ]},
-      { label:"S2 · 7–12 Jul",descarga:false, days:[
-        {day:"MAR",type:"Fácil",km:10,segs:[{d:"2 km",p:"6:00/km",t:"Calentamiento"},{d:"6 km",p:"5:20/km",t:"Aeróbico base"},{d:"2 km",p:"6:00/km",t:"Enfriamiento"}]},
-        {day:"MIÉ",type:"Series",km:12,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"7×1 km",p:"4:02/km",t:"Series intensas"},{d:"7×200 m",p:"trote",t:"Recup. entre series"},{d:"1.5 km",p:"6:00/km",t:"Enfriamiento"}]},
-        {day:"VIE",type:"Progresivo",km:10,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"5 km",p:"4:50/km",t:"Ritmo medio"},{d:"3 km",p:"4:12/km",t:"Progresivo final"}]},
-        {day:"DOM",type:"Fondo",km:21,segs:[{d:"3 km",p:"5:40/km",t:"Entrada en calor"},{d:"15 km",p:"5:15/km",t:"Fondo aeróbico"},{d:"3 km",p:"5:40/km",t:"Cierre suave"}]},
-      ]},
-      { label:"S3 · 14–19 Jul",descarga:false, days:[
-        {day:"MAR",type:"Fácil",km:10,segs:[{d:"2 km",p:"6:00/km",t:"Calentamiento"},{d:"6 km",p:"5:15/km",t:"Aeróbico base"},{d:"2 km",p:"6:00/km",t:"Enfriamiento"}]},
-        {day:"MIÉ",type:"Series",km:12,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"7×1 km",p:"4:00/km",t:"Series a ritmo umbral"},{d:"7×200 m",p:"trote",t:"Recup. entre series"},{d:"1.5 km",p:"6:00/km",t:"Enfriamiento"}]},
-        {day:"VIE",type:"Progresivo",km:11,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"6 km",p:"4:45/km",t:"Ritmo medio"},{d:"3 km",p:"4:10/km",t:"Progresivo final"}]},
-        {day:"DOM",type:"Fondo",km:21,segs:[{d:"3 km",p:"5:40/km",t:"Entrada en calor"},{d:"15 km",p:"5:10/km",t:"Fondo aeróbico"},{d:"3 km",p:"5:40/km",t:"Cierre suave"}]},
-      ]},
-      { label:"S4 · 21–26 Jul",descarga:true, days:[
-        {day:"MAR",type:"Recuperación",km:8,segs:[{d:"8 km",p:"5:50/km",t:"Todo suave — semana descarga"}]},
-        {day:"MIÉ",type:"Series ↓",km:9,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"4×1 km",p:"4:05/km",t:"Volumen reducido"},{d:"4×200 m",p:"trote",t:"Recuperación"},{d:"1.5 km",p:"6:00/km",t:"Enfriamiento"}]},
-        {day:"VIE",type:"Fácil",km:8,segs:[{d:"8 km",p:"5:40/km",t:"Rodaje suave"}]},
-        {day:"DOM",type:"Fondo corto",km:15,segs:[{d:"3 km",p:"5:40/km",t:"Entrada en calor"},{d:"9 km",p:"5:20/km",t:"Fondo suave"},{d:"3 km",p:"5:40/km",t:"Cierre"}]},
-      ]},
-    ]
-  },
-  {
-    month:"AGOSTO",year:"2026",phase:"FASE 2",phaseLabel:"Desarrollo del Umbral",color:"#FF8C42",
-    focus:"Series de 2km a ritmo objetivo. Tempo runs continuos. El mes más exigente",
-    target:"Series 2km a 3:58/km · Tempo 6km a 4:15/km",totalKm:205,
-    weeks:[
-      { label:"S1 · 1–2 Ago",descarga:false, days:[
-        {day:"MAR",type:"Fácil",km:10,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"6 km",p:"5:20/km",t:"Rodaje aeróbico"},{d:"2 km",p:"5:50/km",t:"Enfriamiento"}]},
-        {day:"MIÉ",type:"Series 2km",km:11,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"4×2 km",p:"4:00/km",t:"Series de umbral"},{d:"4×400 m",p:"trote",t:"Recup. 2 min"},{d:"1 km",p:"6:00/km",t:"Enfriamiento"}]},
-        {day:"VIE",type:"Tempo",km:10,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"6 km",p:"4:20/km",t:"Tempo continuo"},{d:"2 km",p:"5:50/km",t:"Enfriamiento"}]},
-        {day:"DOM",type:"Fondo",km:21,segs:[{d:"3 km",p:"5:40/km",t:"Entrada en calor"},{d:"15 km",p:"5:20/km",t:"Fondo aeróbico"},{d:"3 km",p:"5:40/km",t:"Cierre"}]},
-      ]},
-      { label:"S2 · 4–9 Ago",descarga:false, days:[
-        {day:"MAR",type:"Fácil",km:10,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"6 km",p:"5:15/km",t:"Rodaje aeróbico"},{d:"2 km",p:"5:50/km",t:"Enfriamiento"}]},
-        {day:"MIÉ",type:"Series 2km",km:12,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"4×2 km",p:"3:58/km",t:"Series de umbral"},{d:"4×400 m",p:"trote",t:"Recup. 2 min"},{d:"1.5 km",p:"6:00/km",t:"Enfriamiento"}]},
-        {day:"VIE",type:"Tempo",km:10,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"6 km",p:"4:15/km",t:"Tempo continuo"},{d:"2 km",p:"5:50/km",t:"Enfriamiento"}]},
-        {day:"DOM",type:"Fondo",km:21,segs:[{d:"3 km",p:"5:40/km",t:"Entrada en calor"},{d:"15 km",p:"5:15/km",t:"Fondo aeróbico"},{d:"3 km",p:"5:40/km",t:"Cierre"}]},
-      ]},
-      { label:"S3 · 11–16 Ago",descarga:false, days:[
-        {day:"MAR",type:"Fácil",km:10,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"6 km",p:"5:10/km",t:"Rodaje aeróbico"},{d:"2 km",p:"5:50/km",t:"Enfriamiento"}]},
-        {day:"MIÉ",type:"Series 2km",km:13,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"5×2 km",p:"3:58/km",t:"Series de umbral"},{d:"5×400 m",p:"trote",t:"Recup. 2 min"},{d:"1 km",p:"6:00/km",t:"Enfriamiento"}]},
-        {day:"VIE",type:"Tempo",km:11,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"7 km",p:"4:15/km",t:"Tempo continuo"},{d:"2 km",p:"5:50/km",t:"Enfriamiento"}]},
-        {day:"DOM",type:"Fondo",km:21,segs:[{d:"3 km",p:"5:40/km",t:"Entrada en calor"},{d:"15 km",p:"5:10/km",t:"Fondo aeróbico"},{d:"3 km",p:"5:40/km",t:"Cierre"}]},
-      ]},
-      { label:"S4 · 18–23 Ago",descarga:true, days:[
-        {day:"MAR",type:"Recuperación",km:8,segs:[{d:"8 km",p:"5:50/km",t:"Descarga — todo suave"}]},
-        {day:"MIÉ",type:"Series ↓",km:9,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"3×2 km",p:"4:00/km",t:"Series reducidas"},{d:"3×400 m",p:"trote",t:"Recuperación"},{d:"1 km",p:"6:00/km",t:"Enfriamiento"}]},
-        {day:"VIE",type:"Fácil",km:8,segs:[{d:"8 km",p:"5:40/km",t:"Rodaje suave"}]},
-        {day:"DOM",type:"Fondo corto",km:15,segs:[{d:"3 km",p:"5:40/km",t:"Entrada en calor"},{d:"9 km",p:"5:20/km",t:"Fondo suave"},{d:"3 km",p:"5:40/km",t:"Cierre"}]},
-      ]},
-    ]
-  },
-  {
-    month:"SEPTIEMBRE",year:"2026",phase:"FASE 2",phaseLabel:"Desarrollo del Umbral",color:"#FF8C42",
-    focus:"Alargar el tempo. Ritmo de carrera cada vez más natural y sostenible",
-    target:"Tempo 7km a 4:10/km · Series 2km a 3:55/km",totalKm:198,
-    weeks:[
-      { label:"S1 · 1–6 Sep",descarga:false, days:[
-        {day:"MAR",type:"Fácil",km:10,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"6 km",p:"5:10/km",t:"Rodaje aeróbico"},{d:"2 km",p:"5:50/km",t:"Enfriamiento"}]},
-        {day:"MIÉ",type:"Series 2km",km:13,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"5×2 km",p:"3:57/km",t:"Series bajo umbral"},{d:"5×400 m",p:"trote",t:"Recup. 2 min"},{d:"1 km",p:"6:00/km",t:"Enfriamiento"}]},
-        {day:"VIE",type:"Tempo",km:11,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"7 km",p:"4:12/km",t:"Tempo continuo"},{d:"2 km",p:"5:50/km",t:"Enfriamiento"}]},
-        {day:"DOM",type:"Fondo",km:21,segs:[{d:"3 km",p:"5:40/km",t:"Entrada en calor"},{d:"15 km",p:"5:10/km",t:"Fondo aeróbico"},{d:"3 km",p:"5:40/km",t:"Cierre"}]},
-      ]},
-      { label:"S2 · 8–13 Sep",descarga:false, days:[
-        {day:"MAR",type:"Fácil",km:10,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"6 km",p:"5:05/km",t:"Rodaje aeróbico"},{d:"2 km",p:"5:50/km",t:"Enfriamiento"}]},
-        {day:"MIÉ",type:"Series 2km",km:13,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"5×2 km",p:"3:56/km",t:"Series bajo umbral"},{d:"5×400 m",p:"trote",t:"Recup. 2 min"},{d:"1 km",p:"6:00/km",t:"Enfriamiento"}]},
-        {day:"VIE",type:"Tempo",km:11,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"7 km",p:"4:10/km",t:"Tempo continuo"},{d:"2 km",p:"5:50/km",t:"Enfriamiento"}]},
-        {day:"DOM",type:"Fondo",km:21,segs:[{d:"3 km",p:"5:40/km",t:"Entrada en calor"},{d:"15 km",p:"5:05/km",t:"Fondo aeróbico"},{d:"3 km",p:"5:40/km",t:"Cierre"}]},
-      ]},
-      { label:"S3 · 15–20 Sep",descarga:false, days:[
-        {day:"MAR",type:"Fácil",km:10,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"6 km",p:"5:00/km",t:"Rodaje aeróbico"},{d:"2 km",p:"5:50/km",t:"Enfriamiento"}]},
-        {day:"MIÉ",type:"Series 2km",km:13,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"5×2 km",p:"3:55/km",t:"Series exigentes"},{d:"5×400 m",p:"trote",t:"Recup. 2 min"},{d:"1 km",p:"6:00/km",t:"Enfriamiento"}]},
-        {day:"VIE",type:"Tempo largo",km:12,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"8 km",p:"4:10/km",t:"Tempo continuo"},{d:"2 km",p:"5:50/km",t:"Enfriamiento"}]},
-        {day:"DOM",type:"Fondo",km:21,segs:[{d:"3 km",p:"5:40/km",t:"Entrada en calor"},{d:"15 km",p:"5:05/km",t:"Fondo aeróbico"},{d:"3 km",p:"5:40/km",t:"Cierre"}]},
-      ]},
-      { label:"S4 · 22–27 Sep",descarga:true, days:[
-        {day:"MAR",type:"Recuperación",km:8,segs:[{d:"8 km",p:"5:50/km",t:"Descarga — todo suave"}]},
-        {day:"MIÉ",type:"Series ↓",km:9,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"3×2 km",p:"3:58/km",t:"Series reducidas"},{d:"3×400 m",p:"trote",t:"Recuperación"},{d:"1 km",p:"6:00/km",t:"Enfriamiento"}]},
-        {day:"VIE",type:"Fácil",km:8,segs:[{d:"8 km",p:"5:40/km",t:"Rodaje suave"}]},
-        {day:"DOM",type:"Fondo corto",km:15,segs:[{d:"3 km",p:"5:40/km",t:"Entrada en calor"},{d:"9 km",p:"5:10/km",t:"Fondo suave"},{d:"3 km",p:"5:40/km",t:"Cierre"}]},
-      ]},
-    ]
-  },
-  {
-    month:"OCTUBRE",year:"2026",phase:"FASE 3",phaseLabel:"Afilamiento",color:"#E63946",
-    focus:"Series de 3km a ritmo exacto. Volumen baja, intensidad sube",
-    target:"3×3km a 3:58/km · 5km continuo a 3:58/km",totalKm:170,
-    weeks:[
-      { label:"S1 · 1–4 Oct",descarga:false, days:[
-        {day:"MAR",type:"Fácil",km:8,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"4 km",p:"5:10/km",t:"Rodaje aeróbico"},{d:"2 km",p:"5:50/km",t:"Enfriamiento"}]},
-        {day:"MIÉ",type:"Series 3km",km:12,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"3×3 km",p:"3:58/km",t:"Ritmo objetivo exacto"},{d:"3×500 m",p:"trote",t:"Recup. 3 min"},{d:"1 km",p:"6:00/km",t:"Enfriamiento"}]},
-        {day:"VIE",type:"Ritmo carrera",km:8,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"5 km",p:"3:58/km",t:"Ritmo objetivo exacto"},{d:"1 km",p:"5:50/km",t:"Enfriamiento"}]},
-        {day:"DOM",type:"Fondo",km:18,segs:[{d:"3 km",p:"5:40/km",t:"Entrada en calor"},{d:"12 km",p:"5:10/km",t:"Fondo aeróbico"},{d:"3 km",p:"5:40/km",t:"Cierre"}]},
-      ]},
-      { label:"S2 · 6–11 Oct",descarga:false, days:[
-        {day:"MAR",type:"Fácil",km:8,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"4 km",p:"5:05/km",t:"Rodaje aeróbico"},{d:"2 km",p:"5:50/km",t:"Enfriamiento"}]},
-        {day:"MIÉ",type:"Series 3km",km:12,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"3×3 km",p:"3:56/km",t:"Bajo ritmo objetivo"},{d:"3×500 m",p:"trote",t:"Recup. 3 min"},{d:"1 km",p:"6:00/km",t:"Enfriamiento"}]},
-        {day:"VIE",type:"Ritmo carrera",km:9,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"6 km",p:"3:58/km",t:"Ritmo objetivo exacto"},{d:"1 km",p:"5:50/km",t:"Enfriamiento"}]},
-        {day:"DOM",type:"Fondo",km:18,segs:[{d:"3 km",p:"5:40/km",t:"Entrada en calor"},{d:"12 km",p:"5:05/km",t:"Fondo aeróbico"},{d:"3 km",p:"5:40/km",t:"Cierre"}]},
-      ]},
-      { label:"S3 · 13–18 Oct",descarga:false, days:[
-        {day:"MAR",type:"Fácil",km:8,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"4 km",p:"5:00/km",t:"Rodaje aeróbico"},{d:"2 km",p:"5:50/km",t:"Enfriamiento"}]},
-        {day:"MIÉ",type:"Series 3km",km:12,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"3×3 km",p:"3:55/km",t:"Bajo ritmo objetivo"},{d:"3×500 m",p:"trote",t:"Recup. 3 min"},{d:"1 km",p:"6:00/km",t:"Enfriamiento"}]},
-        {day:"VIE",type:"Ritmo carrera",km:9,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"6 km",p:"3:58/km",t:"Ritmo objetivo exacto"},{d:"1 km",p:"5:50/km",t:"Enfriamiento"}]},
-        {day:"DOM",type:"Fondo medio",km:15,segs:[{d:"3 km",p:"5:40/km",t:"Entrada en calor"},{d:"9 km",p:"5:05/km",t:"Fondo aeróbico"},{d:"3 km",p:"5:40/km",t:"Cierre"}]},
-      ]},
-      { label:"S4 · 20–25 Oct",descarga:true, days:[
-        {day:"MAR",type:"Recuperación",km:7,segs:[{d:"7 km",p:"5:50/km",t:"Descarga — piernas frescas"}]},
-        {day:"MIÉ",type:"Series ↓",km:8,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"2×3 km",p:"3:58/km",t:"Series reducidas"},{d:"2×500 m",p:"trote",t:"Recuperación"},{d:"1 km",p:"6:00/km",t:"Enfriamiento"}]},
-        {day:"VIE",type:"Fácil",km:7,segs:[{d:"7 km",p:"5:40/km",t:"Rodaje suave"}]},
-        {day:"DOM",type:"Fondo corto",km:12,segs:[{d:"3 km",p:"5:40/km",t:"Entrada en calor"},{d:"6 km",p:"5:10/km",t:"Fondo suave"},{d:"3 km",p:"5:40/km",t:"Cierre"}]},
-      ]},
-    ]
-  },
-  {
-    month:"NOVIEMBRE",year:"2026",phase:"FASE 3",phaseLabel:"Tapering + Carrera",color:"#FFD700",
-    focus:"Volumen cae al mínimo. Mantener el ritmo, descansar las piernas. CARRERA el 27",
-    target:"🏁 10K sub 40:00 el 27 Nov",totalKm:110,
-    weeks:[
-      { label:"S1 · 3–8 Nov",descarga:false, days:[
-        {day:"MAR",type:"Fácil",km:8,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"4 km",p:"5:00/km",t:"Rodaje aeróbico"},{d:"2 km",p:"5:50/km",t:"Enfriamiento"}]},
-        {day:"MIÉ",type:"Test 5K",km:9,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"5 km",p:"3:52/km",t:"Test — objetivo sub 19:30"},{d:"2 km",p:"6:00/km",t:"Enfriamiento"}]},
-        {day:"VIE",type:"Suave",km:6,segs:[{d:"6 km",p:"5:50/km",t:"Recuperación post-test"}]},
-        {day:"DOM",type:"Fondo corto",km:12,segs:[{d:"3 km",p:"5:50/km",t:"Entrada en calor"},{d:"6 km",p:"5:15/km",t:"Fondo suave"},{d:"3 km",p:"5:50/km",t:"Cierre"}]},
-      ]},
-      { label:"S2 · 10–15 Nov",descarga:false, days:[
-        {day:"MAR",type:"Fácil",km:7,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"3 km",p:"5:00/km",t:"Rodaje aeróbico"},{d:"2 km",p:"5:50/km",t:"Enfriamiento"}]},
-        {day:"MIÉ",type:"Series cortas",km:8,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"4×1 km",p:"3:55/km",t:"Mantener sharpness"},{d:"4×200 m",p:"trote",t:"Recuperación"},{d:"1 km",p:"6:00/km",t:"Enfriamiento"}]},
-        {day:"VIE",type:"Ritmo carrera",km:6,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"3 km",p:"3:58/km",t:"Recordar el ritmo"},{d:"1 km",p:"5:50/km",t:"Enfriamiento"}]},
-        {day:"DOM",type:"Fondo suave",km:12,segs:[{d:"3 km",p:"5:50/km",t:"Entrada en calor"},{d:"6 km",p:"5:20/km",t:"Fondo muy suave"},{d:"3 km",p:"5:50/km",t:"Cierre"}]},
-      ]},
-      { label:"S3 · 17–22 Nov",descarga:true, days:[
-        {day:"MAR",type:"Tapering",km:6,segs:[{d:"2 km",p:"5:50/km",t:"Calentamiento"},{d:"3 km",p:"3:58/km",t:"Recordar ritmo objetivo"},{d:"1 km",p:"5:50/km",t:"Enfriamiento"}]},
-        {day:"MIÉ",type:"Tapering",km:5,segs:[{d:"5 km",p:"5:30/km",t:"Piernas frescas — suave"}]},
-        {day:"VIE",type:"Pre-carrera",km:3,segs:[{d:"1.5 km",p:"5:50/km",t:"Activación suave"},{d:"4×100 m",p:"3:45/km",t:"Striding — activar"},{d:"1 km",p:"6:00/km",t:"Cierre"}]},
-        {day:"DOM 22",type:"Descanso",km:0,segs:[{d:"—",p:"—",t:"Descanso completo. Hidratación y carbohidratos"}]},
-      ]},
-      { label:"🏁 27 Nov",descarga:false,isRace:true, days:[
-        {day:"JUE 26",type:"Pre-día",km:0,segs:[{d:"—",p:"—",t:"Descanso total. Cena rica en carbohidratos"}]},
-        {day:"VIE 27 🏁",type:"10K CARRERA",km:10,isRaceDay:true,segs:[{d:"1 km",p:"4:05/km",t:"Salida controlada"},{d:"7 km",p:"3:58/km",t:"Ritmo objetivo sostenido"},{d:"2 km",p:"3:50/km",t:"Empuje final — todo lo que queda"}]},
-      ]},
-    ]
-  },
-];
 
-const TYPE_COLORS = {
-  "Fácil":"#4A9EFF","Recuperación":"#7FB3D3","Suave":"#4A9EFF",
-  "Series":"#FF8C42","Series 2km":"#FF8C42","Series 3km":"#FF8C42",
-  "Series cortas":"#FF8C42","Series ↓":"#FFA96B",
-  "Progresivo":"#A855F7","Ritmo carrera":"#E63946",
-  "Tempo":"#E63946","Tempo largo":"#E63946",
-  "Fondo":"#3ECFAA","Fondo corto":"#3ECFAA","Fondo medio":"#3ECFAA","Fondo suave":"#3ECFAA",
-  "Test 5K":"#FF6B9D","Tapering":"#FFD700","Pre-carrera":"#FFD700",
-  "Pre-día":"#888","Descanso":"#555","10K CARRERA":"#FFD700",
-};
+    botones_usar = []
 
-let activeMonth = 0, activeWeek = 0, expandedDay = null;
+    # =========================
+    # FUNCIONES
+    # =========================
+    def leer_tokens():
+        try:
+            return max(0, int(input_tokens.value))
+        except ValueError:
+            return 0
 
-function getTypeColor(type){ return TYPE_COLORS[type] || "#888"; }
+    def calcular_usos():
+        for i, accion in enumerate(ACCIONES):
+            usos_texts[i].value = str(estado["enderezados"] // accion["costo"])
 
-function renderMonthTabs(){
-  const el = document.getElementById('monthTabs');
-  el.innerHTML = MONTHS.map((m,i) => `
-    <button class="month-tab ${i===activeMonth?'active':''}" style="--c:${m.color}" onclick="selectMonth(${i})">
-      ${m.month.slice(0,3)}
-      <div class="phase-mini">${m.phase.replace('FASE ','F')}</div>
-    </button>
-  `).join('');
-}
+    def actualizar_botones():
+        for i, boton in enumerate(botones_usar):
+            costo = ACCIONES[i]["costo"]
 
-function renderMonthHeader(){
-  const m = MONTHS[activeMonth];
-  document.getElementById('monthHeader').innerHTML = `
-    <div class="month-header" style="--c:${m.color}">
-      <div class="month-header-row">
-        <div>
-          <div class="month-name" style="color:${m.color}">${m.month} <span class="month-year">${m.year}</span></div>
-          <div class="month-phase">${m.phase} · ${m.phaseLabel}</div>
-        </div>
-        <div class="month-km">
-          <div class="km-num" style="color:${m.color}">${m.totalKm} km</div>
-          <div class="km-label">MES TOTAL</div>
-        </div>
-      </div>
-      <div class="month-focus" style="border-left-color:${m.color}">
-        <span style="color:${m.color}">FOCO: </span>${m.focus}
-      </div>
-      <div class="month-target" style="color:#555">→ ${m.target}</div>
-    </div>
-  `;
-}
+            if estado["enderezados"] >= costo:
+                boton.opacity = 1
+                boton.on_click = usar_accion(i)
+            else:
+                boton.opacity = 0.35
+                boton.on_click = None
 
-function renderWeekSelector(){
-  const m = MONTHS[activeMonth];
-  document.getElementById('weekSelector').innerHTML = m.weeks.map((w,i) => `
-    <button class="week-btn ${i===activeWeek?'active':''}"
-      style="${i===activeWeek?`background:${m.color};border-color:${m.color};`:''}"
-      onclick="selectWeek(${i})">
-      ${w.isRace?'🏁':`S${i+1}`}
-      ${w.descarga?'<div class="descarga-label">↓</div>':''}
-    </button>
-  `).join('');
-}
+    def refrescar():
+        input_tokens.value = str(estado["enderezados"])
+        inicial_text.value = f"Inicial: {estado['inicial']}"
 
-function renderWeekLabel(){
-  const m = MONTHS[activeMonth];
-  const w = m.weeks[activeWeek];
-  document.getElementById('weekLabelRow').innerHTML = `
-    <div class="week-label" style="color:${m.color}">${w.label}</div>
-    ${w.descarga?'<div class="descarga-badge">SEMANA DESCARGA</div>':''}
-    ${w.isRace?'<div class="race-badge">¡DÍA DE CARRERA!</div>':''}
-  `;
-}
+        enderezados_num.value = str(estado["enderezados"])
+        girados_num.value = str(estado["girados"])
 
-function renderDays(){
-  const m = MONTHS[activeMonth];
-  const w = m.weeks[activeWeek];
-  document.getElementById('daysContainer').innerHTML = w.days.map((day,di) => {
-    const tc = getTypeColor(day.type);
-    const isExp = expandedDay === di;
-    const isRaceDay = day.isRaceDay;
-    return `
-      <div class="day-card ${isExp?'expanded':''} ${isRaceDay?'race-day':''}" style="--tc-alpha:${tc}88">
-        <button class="day-header" onclick="toggleDay(${di})">
-          <div class="day-bar" style="background:${tc}"></div>
-          <div class="day-info">
-            <div class="day-top">
-              <span class="day-name" style="${isRaceDay?'color:#FFD700':''}">${day.day}</span>
-              <span class="day-km" style="color:${tc}">${day.km>0?day.km+' km':'—'}</span>
-            </div>
-            <div class="day-type" style="color:${tc}">${day.type.toUpperCase()}</div>
-          </div>
-          <div class="day-chevron" style="transform:${isExp?'rotate(180deg)':'none'}">▾</div>
-        </button>
-        ${isExp?`
-        <div class="segments">
-          <div class="seg-header"><span>DIST</span><span>PACE</span><span>DESCRIPCIÓN</span></div>
-          ${day.segs.map((s,si) => `
-            <div class="seg-row">
-              <span class="seg-dist">${s.d}</span>
-              <span class="seg-pace" style="color:${s.p==='trote'||s.p==='—'?'#333':tc}">${s.p}</span>
-              <span class="seg-desc">${s.t}</span>
-            </div>
-          `).join('')}
-        </div>
-        `:''}
-      </div>
-    `;
-  }).join('');
-}
+        calcular_usos()
+        actualizar_botones()
 
-function renderWeekSummary(){
-  const m = MONTHS[activeMonth];
-  const w = m.weeks[activeWeek];
-  const totalKm = w.days.reduce((a,d)=>a+(d.km||0),0);
-  const sessions = w.days.filter(d=>d.km>0).length;
-  const keyTypes = ["Series","Series 2km","Series 3km","Test 5K","Tempo","Tempo largo","Ritmo carrera","10K CARRERA"];
-  const key = w.isRace ? "CARRERA" : (w.days.find(d=>keyTypes.includes(d.type))?.type?.split(" ")[0] || "Fondo");
-  document.getElementById('weekSummary').innerHTML = `
-    <div class="summary-label">RESUMEN · ${w.label}</div>
-    <div class="summary-stats">
-      <div class="stat"><div class="stat-val" style="color:${m.color}">${totalKm} km</div><div class="stat-label">KM SEMANA</div></div>
-      <div class="stat"><div class="stat-val" style="color:#4A9EFF">${sessions}</div><div class="stat-label">SESIONES</div></div>
-      <div class="stat"><div class="stat-val" style="color:#FF8C42;font-size:13px">${key}</div><div class="stat-label">CLAVE</div></div>
-    </div>
-  `;
-}
+        page.update()
 
-function renderAll(){
-  renderMonthTabs();
-  renderMonthHeader();
-  renderWeekSelector();
-  renderWeekLabel();
-  renderDays();
-  renderWeekSummary();
-}
+    def aplicar_tokens(e=None):
+        valor = leer_tokens()
+        estado["inicial"] = valor
+        estado["enderezados"] = valor
+        estado["girados"] = 0
+        refrescar()
 
-function selectMonth(i){ activeMonth=i; activeWeek=0; expandedDay=null; renderAll(); }
-function selectWeek(i){ activeWeek=i; expandedDay=null; renderWeekSelector(); renderWeekLabel(); renderDays(); renderWeekSummary(); }
-function toggleDay(di){ expandedDay = expandedDay===di ? null : di; renderDays(); }
+    def enderezar_tokens(e=None):
+        estado["enderezados"] = estado["inicial"]
+        estado["girados"] = 0
+        refrescar()
 
-// Show install banner only in Safari non-standalone
-const isStandalone = window.navigator.standalone;
-const isSafari = /Safari/.test(navigator.userAgent) && !/CriOS|FxiOS|EdgiOS/.test(navigator.userAgent);
-if(!isStandalone && isSafari){ document.getElementById('installBanner').classList.add('show'); }
+    def cambiar_input(delta):
+        def accion(e=None):
+            valor = leer_tokens()
+            valor = max(0, valor + delta)
+            input_tokens.value = str(valor)
+            page.update()
 
-renderAll();
-</script>
-</body>
-</html>
+        return accion
+
+    def usar_accion(indice):
+        def accion(e=None):
+            costo = ACCIONES[indice]["costo"]
+
+            if estado["enderezados"] >= costo:
+                estado["enderezados"] -= costo
+                estado["girados"] += costo
+
+            refrescar()
+
+        return accion
+
+    # =========================
+    # COMPONENTES VISUALES
+    # =========================
+    def borde(ancho=1.5, color=GOLD_DARK):
+        return ft.Border.all(ancho, color)
+
+    def panel(content, bgcolor=CARD_GREEN, padding=12, radius=12):
+        return ft.Container(
+            bgcolor=bgcolor,
+            border=borde(2, GOLD_DARK),
+            border_radius=radius,
+            padding=padding,
+            shadow=ft.BoxShadow(
+                spread_radius=1,
+                blur_radius=8,
+                color="#55000000",
+                offset=ft.Offset(0, 4),
+            ),
+            content=content,
+        )
+
+    def titulo_banda(texto):
+        return ft.Container(
+            bgcolor=CARD_GREEN,
+            border=borde(2, GOLD),
+            border_radius=12,
+            padding=8,
+            alignment=ft.Alignment.CENTER,
+            content=ft.Row(
+                alignment=ft.MainAxisAlignment.CENTER,
+                controls=[
+                    ft.Text("❀", color=GOLD, size=18),
+                    ft.Text(
+                        texto,
+                        size=18,
+                        color=GOLD,
+                        weight=ft.FontWeight.BOLD,
+                        font_family="Georgia",
+                    ),
+                    ft.Text("❀", color=GOLD, size=18),
+                ],
+            ),
+        )
+
+    def boton_rect(texto, bgcolor, on_click, height=56):
+        return ft.Container(
+            height=height,
+            bgcolor=bgcolor,
+            border=borde(2, GOLD),
+            border_radius=8,
+            alignment=ft.Alignment.CENTER,
+            on_click=on_click,
+            content=ft.Text(
+                texto,
+                size=22,
+                color=CREAM,
+                weight=ft.FontWeight.BOLD,
+                font_family="Georgia",
+            ),
+        )
+
+    def boton_cuadrado(texto, on_click):
+        return ft.Container(
+            width=56,
+            height=56,
+            bgcolor=CARD_GREEN,
+            border=borde(2, GOLD),
+            border_radius=8,
+            alignment=ft.Alignment.CENTER,
+            on_click=on_click,
+            content=ft.Text(
+                texto,
+                size=30,
+                color=CREAM,
+                weight=ft.FontWeight.BOLD,
+                font_family="Georgia",
+            ),
+        )
+
+    def circulo_icono(texto, color):
+        return ft.Container(
+            width=62,
+            height=62,
+            bgcolor=color,
+            border=borde(3, GOLD),
+            border_radius=40,
+            alignment=ft.Alignment.CENTER,
+            content=ft.Text(
+                texto,
+                size=30,
+                color=CREAM,
+                weight=ft.FontWeight.BOLD,
+                font_family="Georgia",
+            ),
+        )
+
+    def fila_accion(i, accion):
+        boton = ft.Container(
+            width=86,
+            height=46,
+            bgcolor=accion["btn"],
+            border=borde(2, GOLD),
+            border_radius=8,
+            alignment=ft.Alignment.CENTER,
+            on_click=usar_accion(i),
+            content=ft.Text(
+                "USAR",
+                size=16,
+                color=CREAM,
+                weight=ft.FontWeight.BOLD,
+                font_family="Georgia",
+            ),
+        )
+
+        botones_usar.append(boton)
+
+        return ft.Container(
+            bgcolor="#102018",
+            border=borde(1.5, GOLD_DARK),
+            border_radius=10,
+            padding=10,
+            content=ft.Row(
+                spacing=10,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                controls=[
+                    circulo_icono(accion["icono"], accion["btn"]),
+
+                    ft.Column(
+                        expand=True,
+                        spacing=4,
+                        controls=[
+                            ft.Text(
+                                f"{i + 1}. {accion['nombre']}",
+                                size=19,
+                                color=CREAM,
+                                weight=ft.FontWeight.BOLD,
+                                font_family="Georgia",
+                            ),
+                            ft.Text(
+                                f"Costo: {accion['costo']} tokens",
+                                size=16,
+                                color=accion["color"],
+                                weight=ft.FontWeight.BOLD,
+                                font_family="Georgia",
+                            ),
+                        ],
+                    ),
+
+                    ft.Column(
+                        width=58,
+                        spacing=0,
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        controls=[
+                            usos_texts[i],
+                            ft.Text(
+                                "veces",
+                                size=13,
+                                color=CREAM,
+                                font_family="Georgia",
+                            ),
+                        ],
+                    ),
+
+                    boton,
+                ],
+            ),
+        )
+
+    def carta_token(titulo, numero_control, color_titulo, fondo, girada=False):
+        carta = ft.Container(
+            width=150,
+            height=190,
+            bgcolor=fondo,
+            border=borde(3, GOLD),
+            border_radius=12,
+            padding=8,
+            content=ft.Stack(
+                controls=[
+                    ft.Container(
+                        left=5,
+                        top=5,
+                        right=5,
+                        bottom=5,
+                        border=borde(1.5, GOLD_DARK),
+                        border_radius=8,
+                    ),
+                    ft.Container(
+                        top=12,
+                        left=0,
+                        right=0,
+                        content=ft.Text(
+                            titulo,
+                            size=14,
+                            color=color_titulo,
+                            weight=ft.FontWeight.BOLD,
+                            text_align=ft.TextAlign.CENTER,
+                            font_family="Georgia",
+                        ),
+                    ),
+                    ft.Container(
+                        top=52,
+                        left=0,
+                        right=0,
+                        bottom=38,
+                        alignment=ft.Alignment.CENTER,
+                        content=numero_control,
+                    ),
+                    ft.Container(
+                        bottom=10,
+                        left=0,
+                        right=0,
+                        content=ft.Text(
+                            "❀",
+                            size=24,
+                            color=color_titulo,
+                            text_align=ft.TextAlign.CENTER,
+                        ),
+                    ),
+                ],
+            ),
+        )
+
+        if girada:
+            carta.rotate = ft.Rotate(angle=math.pi / 18)
+
+        return carta
+
+    # =========================
+    # HEADER
+    # =========================
+    header = ft.Container(
+        padding=16,
+        gradient=ft.LinearGradient(
+            begin=ft.Alignment.TOP_CENTER,
+            end=ft.Alignment.BOTTOM_CENTER,
+            colors=[SKY, BG],
+        ),
+        content=ft.Column(
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            spacing=8,
+            controls=[
+                ft.Row(
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    controls=[
+                        ft.Text("☁", color=CREAM, size=26),
+                        ft.Text("兎   宮   本", color=GOLD_DARK, size=22, weight=ft.FontWeight.BOLD),
+                        ft.Text("☁", color=CREAM, size=26),
+                    ],
+                ),
+                panel(
+                    bgcolor="#17301F",
+                    padding=14,
+                    radius=16,
+                    content=ft.Text(
+                        "Contador de acciones\ndel comandante",
+                        size=31,
+                        color=CREAM,
+                        weight=ft.FontWeight.BOLD,
+                        text_align=ft.TextAlign.CENTER,
+                        font_family="Georgia",
+                    ),
+                ),
+            ],
+        ),
+    )
+
+    # =========================
+    # TOKENS DISPONIBLES
+    # =========================
+    tokens_panel = panel(
+        bgcolor="#244728",
+        padding=14,
+        content=ft.Column(
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            spacing=12,
+            controls=[
+                ft.Row(
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                    spacing=18,
+                    controls=[
+                        boton_cuadrado("−", cambiar_input(-1)),
+                        input_tokens,
+                        boton_cuadrado("+", cambiar_input(1)),
+                    ],
+                ),
+                boton_rect("APLICAR", BLACK_CARD, aplicar_tokens),
+                boton_rect("ENDEREZAR", CARD_GREEN_2, enderezar_tokens),
+                inicial_text,
+            ],
+        ),
+    )
+
+    # =========================
+    # ACCIONES
+    # =========================
+    acciones_panel = panel(
+        bgcolor="#0B1711",
+        padding=10,
+        content=ft.Column(
+            spacing=8,
+            controls=[
+                fila_accion(0, ACCIONES[0]),
+                fila_accion(1, ACCIONES[1]),
+                fila_accion(2, ACCIONES[2]),
+            ],
+        ),
+    )
+
+    # =========================
+    # ESTADO DE TOKENS
+    # =========================
+    estado_panel = panel(
+        bgcolor="#0B1711",
+        padding=12,
+        content=ft.Row(
+            alignment=ft.MainAxisAlignment.SPACE_EVENLY,
+            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            controls=[
+                ft.Column(
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    controls=[
+                        carta_token(
+                            "TOKENS\nENDEREZADOS",
+                            enderezados_num,
+                            CARD_GREEN_3,
+                            "#244728",
+                            girada=False,
+                        ),
+                    ],
+                ),
+                ft.Column(
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    controls=[
+                        carta_token(
+                            "TOKENS\nGIRADOS",
+                            girados_num,
+                            RED,
+                            BLACK_CARD,
+                            girada=True,
+                        ),
+                    ],
+                ),
+            ],
+        ),
+    )
+
+    # =========================
+    # LAYOUT FINAL
+    # =========================
+    page.add(
+        ft.Container(
+            gradient=ft.LinearGradient(
+                begin=ft.Alignment.TOP_CENTER,
+                end=ft.Alignment.BOTTOM_CENTER,
+                colors=[SKY, BG, "#9B7C4A"],
+            ),
+            content=ft.Column(
+                spacing=12,
+                controls=[
+                    header,
+
+                    ft.Container(
+                        padding=14,
+                        content=ft.Column(
+                            spacing=12,
+                            controls=[
+                                titulo_banda("TOKENS DISPONIBLES"),
+                                tokens_panel,
+
+                                titulo_banda("ACCIONES POSIBLES"),
+                                acciones_panel,
+
+                                titulo_banda("ESTADO DE LOS TOKENS"),
+                                estado_panel,
+
+                                ft.Container(
+                                    alignment=ft.Alignment.CENTER,
+                                    content=ft.Text(
+                                        "🍁   ✦   花   ✦   🍁",
+                                        size=22,
+                                        color=GOLD_DARK,
+                                    ),
+                                ),
+                                ft.Container(height=20),
+                            ],
+                        ),
+                    ),
+                ],
+            ),
+        )
+    )
+
+    refrescar()
+
+
+ft.run(main)
